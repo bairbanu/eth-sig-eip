@@ -1,6 +1,6 @@
 const ethUtil = require('ethereumjs-util')
 const ethAbi = require('ethereumjs-abi')
-const mmdecrypt = require("meta-mask-decrypt")
+const mmdecrypt = require("./meta-mask-decrypt.js") 
 
 // const encryptedData = { iv: '520f202afe4ab4a506c516b59ff23fcb',
 //   ephemPublicKey: '042e150e1d5eb888fe604d5052a767aea76f43e351dd698a89a96ae3da13501e5ff61b6225ea9af88e13aaccbca0c163785110c265c3d5e8adb0ff0a5ac803db9f',
@@ -74,13 +74,13 @@ module.exports = {
     const publicKey = recoverPublicKey(msgHash, msgParams.sig)
     const sender = ethUtil.publicToAddress(publicKey)
     return ethUtil.bufferToHex(sender)
-  }
+  },
 
   decrypt: async function (encryptedMsg, privateKey){
     const decrypted = await mmdecrypt.decryptWithPrivateKey (privateKey, encryptedMsg);
     
     const decryptedPayload = JSON.parse(decrypted)
-    console.log(decryptedPayload.message);
+    return decryptedPayload.message;
   }
 
 }
