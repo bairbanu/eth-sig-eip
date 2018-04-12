@@ -1,6 +1,6 @@
 const ethUtil = require('ethereumjs-util')
 const ethAbi = require('ethereumjs-abi')
-const mmdecrypt = require("./meta-mask-decrypt.js") 
+const mmcrypto = require("./meta-mask-crypto.js") 
 
 // const encryptedData = { iv: '520f202afe4ab4a506c516b59ff23fcb',
 //   ephemPublicKey: '042e150e1d5eb888fe604d5052a767aea76f43e351dd698a89a96ae3da13501e5ff61b6225ea9af88e13aaccbca0c163785110c265c3d5e8adb0ff0a5ac803db9f',
@@ -77,10 +77,46 @@ module.exports = {
   },
 
   decrypt: async function (encryptedMsg, privateKey){
-    const decrypted = await mmdecrypt.decryptWithPrivateKey (privateKey, encryptedMsg);
+    const decrypted = await mmcrypto.decryptWithPrivateKey (privateKey, encryptedMsg);
     
     const decryptedPayload = JSON.parse(decrypted)
     return decryptedPayload.message;
+  },
+
+  encrypt: async function (senderprivateKey, recieverPublicKey, msgParams){
+    //first sign message
+    // var privateKey = ethUtil.toBuffer(senderprivateKey)
+    // var message = ethUtil.toBuffer(msgParams.data)
+    // var msgHash = ethUtil.hashPersonalMessage(message)
+    // var sig = ethUtil.ecsign(msgHash, privateKey)
+    // var signature = ethUtil.bufferToHex(this.concatSig(sig.v, sig.r, sig.s))
+
+    var signature = function keccak256(params) {
+        if (!Array.isArray(params)) {
+            params = [{
+                type: 'string',
+                value: params
+            }];
+        }
+        return ethAbi.soliditySha3(...params);
+    }
+
+    
+
+    // then create payload
+    const payload = {
+      message: msgParams.data,
+      signature
+    };
+
+    //then encrypt
+    const encrypted = await mmcrypto.encryptWithPublicKey(
+      recieverPublicKey, // by encryping with bobs publicKey, only bob can decrypt the payload with his privateKey
+      JSON.stringify(payload) // we have to stringify the payload before we can encrypt it
+    );
+
+    return encrypted;
+
   }
 
 }
