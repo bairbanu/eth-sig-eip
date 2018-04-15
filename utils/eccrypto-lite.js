@@ -15,28 +15,9 @@ module.exports = {
 	}
 };
 
-var decryptWithPrivateKey = async function(privateKey, encrypted) {
-	// remove trailing '0x' from privateKey
-	const twoStripped = privateKey.replace(/^.{2}/g, "");
-
-	const encryptedBuffer = {
-		iv: new Buffer(encrypted.iv, "hex"),
-		ephemPublicKey: new Buffer(encrypted.ephemPublicKey, "hex"),
-		ciphertext: new Buffer(encrypted.ciphertext, "hex"),
-		mac: new Buffer(encrypted.mac, "hex")
-	};
-
-	const decryptedBuffer = await eccdecrypt(
-		new Buffer(twoStripped, "hex"),
-		encryptedBuffer
-	);
-	return decryptedBuffer.toString();
-};
-
 var encryptWithPublicKey = async function(publicKey, message) {
-	// re-add the compression-flag
-	const pubString = "04" + publicKey;
 
+	//used in encryptedButterParams function
 	const encryptedBuffer = function(publicKeyTo, msg, opts) {
 		opts = opts || {};
 		// Tmp variable to save context from flat promises;
@@ -62,6 +43,9 @@ var encryptWithPublicKey = async function(publicKey, message) {
 		});
 	};
 
+	// re-add the compression-flag
+	const pubString = "04" + publicKey;
+
 	const encryptedBufferParams = await encryptedBuffer(
 		new Buffer(pubString, "hex"),
 		Buffer(message)
@@ -74,6 +58,24 @@ var encryptWithPublicKey = async function(publicKey, message) {
 		mac: encryptedBufferParams.mac.toString("hex")
 	};
 	return encrypted;
+};
+
+var decryptWithPrivateKey = async function(privateKey, encrypted) {
+	// remove trailing '0x' from privateKey
+	const twoStripped = privateKey.replace(/^.{2}/g, "");
+
+	const encryptedBuffer = {
+		iv: new Buffer(encrypted.iv, "hex"),
+		ephemPublicKey: new Buffer(encrypted.ephemPublicKey, "hex"),
+		ciphertext: new Buffer(encrypted.ciphertext, "hex"),
+		mac: new Buffer(encrypted.mac, "hex")
+	};
+
+	const decryptedBuffer = await eccdecrypt(
+		new Buffer(twoStripped, "hex"),
+		encryptedBuffer
+	);
+	return decryptedBuffer.toString();
 };
 
 function sha512(msg) {
