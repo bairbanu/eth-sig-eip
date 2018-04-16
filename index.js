@@ -69,25 +69,14 @@ module.exports = {
     return ethUtil.bufferToHex(sender);
   },
 
-  encrypt: async function(senderprivateKey, recieverPublicKey, msg) {
-    //first sign message
-
-    var signature = function keccak256(msg) {
-      if (!Array.isArray(msg)) {
-        msg = [
-          {
-            type: "string",
-            value: msg
-          }
-        ];
-      }
-      return ethAbi.soliditySha3(...msg);
-    };
+  encrypt: async function(senderprivateKey, recieverPublicKey, msgParams) {
+    //first sign message using personalSign functions
+    const signed = this.personalSign(ethUtil.toBuffer(senderprivateKey), msgParams);
 
     // then create payload
     const payload = {
-      message: msg,
-      signature
+      message: msgParams.data,
+      signed
     };
 
     //then encrypt
@@ -106,7 +95,14 @@ module.exports = {
     );
 
     const decryptedPayload = JSON.parse(decrypted);
-    return decryptedPayload.message;
+
+    //check signature
+    const senderAddress = this.recoverPersonalSignature({
+      data: decryptedPayload.message,
+      sig: decryptedPayload.signed
+    });
+
+    return { from: senderAddress, message: decryptedPayload.message };
   }
 };
 
